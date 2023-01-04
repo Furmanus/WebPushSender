@@ -5,14 +5,17 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "start:prod": "node app.js",
     "start": "nodemon app.js"
   },
+  "type": "module",
   "author": "",
   "license": "ISC",
   "dependencies": {
     "cookie-parser": "^1.4.6",
+    "dotenv": "^16.0.3",
     "express": "^4.18.1",
-    "socket.io": "^4.5.1",
+    "ioredis": "^5.2.4",
     "uuid": "^8.3.2",
     "web-push": "^3.5.0"
   }

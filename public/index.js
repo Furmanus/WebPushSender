@@ -2,21 +2,16 @@ import './currentSubscriptionData.js';
 import { FormDataBuilder } from './formDataBuilder.js';
 
 const form = document.querySelector('#send_from_consent');
-const resCurrentContainer = document.querySelector('#res');
 const clearWorkersButton = document.querySelector('#clearWorkers');
 const changeVapidButton = document.querySelector('#regenerateVapid');
 const changeVapidForm = document.querySelector('#setVapid');
+const fetchVapidsButton = document.querySelector('#fetchVapids');
 const regenerateSubscriptionButton = document.querySelector('#regenerateSubscription');
-const bigImageLinkElement = document.getElementById('bigImageLink');
-const bigImageLinkCopyButton = document.getElementById('bigImageLinkCopy');
-
-const socket = io();
 
 form.addEventListener('submit', async e => {
   e.preventDefault();
-
   const formDataJson = FormDataBuilder.getInstance(e.target).build();
-  const vapidPublicKey = await fetch('/vapidKey').then(res => res.text());
+  const { publicKey: vapidPublicKey } = await fetch('/vapidKey').then(res => res.json());
 
   if (Notification.permission !== 'denied') {
     const swRegistration = await navigator.serviceWorker.register('/sw.js');
@@ -39,14 +34,34 @@ form.addEventListener('submit', async e => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(formDataJson),
-      }).then(res => res.json());
+      })
+        .then(res => res.json())
+        .then(parsedRes => {
+          return new Promise((resolve, reject) => {
+            const blob = new Blob([parsedRes.request.body.data], { type: 'text/plain' });
+            const reader = new FileReader();
 
-      resCurrentContainer.innerHTML = prettyPrintJson.toHtml({
-        responseData: res.response,
-        error: res.error,
-        requestData: res.request,
-      }, {
-        indent: 2,
+            reader.readAsText(blob, 'utf-8');
+
+            reader.addEventListener('load', () => {
+              parsedRes.request.body.data = reader.result;
+              resolve(parsedRes);
+            }, { once: true });
+
+            reader.addEventListener('error', (e) => {
+              reject(e);
+            }, { once: true });
+          });
+        });
+
+      import('./modal.js').then(module => {
+        module.showContentInModal(prettyPrintJson.toHtml({
+          responseData: res.response,
+          error: res.error,
+          requestData: res.request,
+        }, {
+          indent: 2,
+        }), 'pre');
       });
     }
   }
@@ -73,11 +88,18 @@ changeVapidForm.addEventListener('submit', e => {
   }).then(async res => {
     if (res.ok) {
       changeVapidErrorContainer.textContent = '';
+
+      return res.json();
     } else {
       const err = await res.text();
 
       changeVapidErrorContainer.textContent = err;
     }
+  }).then((body) => {
+    const { publicKey, privateKey } = body;
+
+    document.getElementById('pubVapidText').innerText = publicKey;
+    document.getElementById('prvVapidText').innerText = privateKey;
   });
 });
 
@@ -90,14 +112,18 @@ publicVapid.addEventListener('focus', () => {
 
 clearWorkersButton.addEventListener('click', async () => {
   const registrations = await navigator.serviceWorker.getRegistrations();
-  const unregisterOperations = [];
 
   for (const registration of registrations) {
     registration.unregister();
   }
 });
 
+fetchVapidsButton.addEventListener('click', async () => {
+  const { publicKey, privateKey } = await fetch('/vapidKey').then(res => res.json());
 
+  document.getElementById('pubVapidText').innerText = publicKey;
+  document.getElementById('prvVapidText').innerText = privateKey;
+});
 
 changeVapidButton.addEventListener('click', () => {
   navigator.serviceWorker.ready.then(function(reg) {
@@ -115,15 +141,7 @@ changeVapidButton.addEventListener('click', () => {
   });
 });
 
-regenerateSubscriptionButton.addEventListener('click', () => {
-
-});
-
-bigImageLinkCopyButton.addEventListener('click', () => {
-  const content = bigImageLinkElement.textContent;
-
-  form.querySelector('#bigImage').value = content;
-});
+regenerateSubscriptionButton.addEventListener('click', regenerateSubscription);
 
 async function regenerateSubscription() {
   try {
@@ -131,7 +149,11 @@ async function regenerateSubscription() {
     const subscription = await swRegistration.pushManager.getSubscription();
 
     await subscription.unsubscribe();
-    const vapidPublicKey = await fetch('/vapidKey').then(res => res.text());
+    const { publicKey: vapidPublicKey, privateKey } = await fetch('/vapidKey').then(res => res.json());
+
+    document.getElementById('pubVapidText').innerText = vapidPublicKey;
+    document.getElementById('prvVapidText').innerText = privateKey;
+
     await swRegistration.pushManager.subscribe({
       userVisibleOnly: true, applicationServerKey: vapidPublicKey,
     });
@@ -139,8 +161,3 @@ async function regenerateSubscription() {
     console.error('Error during subscription regeneration', e);
   }
 }
-
-socket.on('vapidChange', ({privateKey, publicKey}) => {
-  document.getElementById('prvVapidText').textContent = privateKey;
-  document.getElementById('pubVapidText').textContent = publicKey;
-});

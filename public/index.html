@@ -18,6 +18,19 @@
             border: 1px solid black;
             margin-bottom: 20px;
             padding: 30px 60px;
+            border-radius: 15px;
+        }
+        .button-box {
+            width: 500px;
+            border: 1px solid black;
+            padding: 30px 60px;
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
         }
         .currentContent {
             margin-top: 12px;
@@ -28,95 +41,123 @@
         .withMargin {
             margin: 12px 0;
         }
+        .modal-dialog {
+            max-width: 90%;
+        }
     </style>
+    <script type="importmap">
+        {
+            "imports": {
+                "@popperjs/core": "https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js",
+                "bootstrap": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.esm.min.js"
+            }
+        }
+    </script>
     <script src=https://cdn.jsdelivr.net/npm/pretty-print-json@1.2/dist/pretty-print-json.min.js></script>
 </head>
 <body>
     <h1>Web push notifications test application</h1>
-    <form id="send_from_consent">
-        <div class="mb-3 form-check form-switch" style="display: none;">
-            <input class="form-check-input" name="useFcm" role="switch" id="useFcm" type="checkbox"/>
-            <label class="form-check-label" for="useFcm">Use Fcm sender data</label>
-        </div>
-        <div class="mb-3 form-check form-switch" >
-            <input class="form-check-input" name="useCurrentData" role="switch" id="useCurrentData" type="checkbox" checked/>
-            <label class="form-check-label" for="useCurrentData">Use current page subscription data</label>
-        </div>
-        <div id="currentDataContainer" class="hidden currentContent">
-            <div class="mb-3">
-                <label for="endpoint" class="form-label">Subscription endpoint</label>
-                <input name="endpoint" class="form-control" id="endpoint" type="text"/>
-            </div>
-            <div class="mb-3">
-                <label for="auth" class="form-label">Keys auth</label>
-                <input name="auth" class="form-control" id="auth" type="text"/>
-            </div>
-            <div class="mb-3">
-                <label for="p256dh" class="form-label">Keys p256dh</label>
-                <input name="p256dh" class="form-control" id="p256dh" type="text"/>
-            </div>
-        </div>
-        <div class="withMargin">
-            <label for="title" class="form-label">Title</label>
-            <input name="title" id="title" class="form-control" type="text" placeholder="Title"/>
-        </div>
-        <div class="withMargin">
-            <label for="payload" class="form-label">Payload</label>
-            <input name="payload" id="payload" class="form-control" type="text" placeholder="Content"/>
-        </div>
-        <div class="withMargin">
-            <label for="icon" class="form-label">Icon</label>
-            <input name="icon" id="icon" class="form-control" type="text" placeholder="https://uxwing.com/wp-content/themes/uxwing/download/hand-gestures/good-icon.png"/>
-        </div>
-        <div class="withMargin">
-            <label for="bigImage" class="form-label">Big image</label>
-            <input name="bigImage" id="bigImage" class="form-control" type="text" placeholder="https://www.wykop.pl/cdn/c3397993/link_APS46Yd2B4MO6ioguXsfkoSHNJoAOjkJ,w1200h627f.jpg"/>
-        </div>
-        <fieldset class="border p-2 withMargin">
-            <legend class="float-none w-auto p-2">actions</legend>
-            <div class="withMargin">
-                <label for="action1Icon" class="form-label">action 1 icon</label>
-                <input name="action1Icon" id="action1Icon" class="form-control" type="text" placeholder="test"/>
-            </div>
-            <div class="withMargin">
-                <label for="action1Title" class="form-label">action 1 title</label>
-                <input name="action1Title" id="action1Title" class="form-control" type="text" placeholder="test"/>
-            </div>
-            <div class="withMargin">
-                <label for="action2Icon" class="form-label">action 2 icon</label>
-                <input name="action2Icon" id="action2Icon" class="form-control" type="text" placeholder="test"/>
-            </div>
-            <div class="withMargin">
-                <label for="action2Title" class="form-label">action 2 title</label>
-                <input name="action2Title" id="action2Title" class="form-control" type="text" placeholder="test"/>
-            </div>
-        </fieldset>
-        <button class="btn btn-primary" type="submit">Send</button>
-        <div style="margin: 20px; width: 100%; max-height: 500px; overflow: auto">
-            <pre class="json-container" id="res"></pre>
-        </div>
-    </form>
-    <button class="btn btn-primary" type="button" id="clearWorkers">Unregister workers</button>
-    <button class="btn btn-primary" type="button" id="regenerateVapid">Regenerate vapid keys</button>
-    <button class="btn btn-primary" type="button" id="regenerateSubscription">Regenerate subscription</button>
-    <div>
+    <section>
         <p>private vapid key: <span style="font-size: 12px" id="prvVapidText"></span></p>
         <p>public vapid key: <span style="font-size: 12px" id="pubVapidText"></span></p>
+    </section>
+    <section>
+        <h5>Send notification</h5>
+        <form id="send_from_consent">
+            <div class="mb-3 form-check form-switch" style="display: none;">
+                <input class="form-check-input" name="useFcm" role="switch" id="useFcm" type="checkbox"/>
+                <label class="form-check-label" for="useFcm">Use Fcm sender data</label>
+            </div>
+            <div class="mb-3 form-check form-switch" >
+                <input class="form-check-input" name="useCurrentData" role="switch" id="useCurrentData" type="checkbox" checked/>
+                <label class="form-check-label" for="useCurrentData">Use current page subscription data</label>
+            </div>
+            <div id="currentDataContainer" class="hidden currentContent">
+                <div class="mb-3">
+                    <label for="endpoint" class="form-label">Subscription endpoint</label>
+                    <input name="endpoint" class="form-control" id="endpoint" type="text"/>
+                </div>
+                <div class="mb-3">
+                    <label for="auth" class="form-label">Keys auth</label>
+                    <input name="auth" class="form-control" id="auth" type="text"/>
+                </div>
+                <div class="mb-3">
+                    <label for="p256dh" class="form-label">Keys p256dh</label>
+                    <input name="p256dh" class="form-control" id="p256dh" type="text"/>
+                </div>
+            </div>
+            <div class="withMargin">
+                <label for="title" class="form-label">Title</label>
+                <input name="title" id="title" class="form-control" type="text" placeholder="Title"/>
+            </div>
+            <div class="withMargin">
+                <label for="payload" class="form-label">Payload</label>
+                <input name="payload" id="payload" class="form-control" type="text" placeholder="Content"/>
+            </div>
+            <div class="withMargin">
+                <label for="icon" class="form-label">Icon URL</label>
+                <input name="icon" id="icon" class="form-control" type="text" placeholder="https://uxwing.com/wp-content/themes/uxwing/download/hand-gestures/good-icon.png"/>
+            </div>
+            <div class="withMargin">
+                <label for="bigImage" class="form-label">Big image URL</label>
+                <input name="bigImage" id="bigImage" class="form-control" type="text" placeholder="https://www.wykop.pl/cdn/c3397993/link_APS46Yd2B4MO6ioguXsfkoSHNJoAOjkJ,w1200h627f.jpg"/>
+            </div>
+            <fieldset class="border p-2 withMargin">
+                <legend class="float-none w-auto p-2">actions</legend>
+                <div class="withMargin">
+                    <label for="action1Icon" class="form-label">action 1 icon URL</label>
+                    <input name="action1Icon" id="action1Icon" class="form-control" type="text" placeholder="test"/>
+                </div>
+                <div class="withMargin">
+                    <label for="action1Title" class="form-label">action 1 title</label>
+                    <input name="action1Title" id="action1Title" class="form-control" type="text" placeholder="test"/>
+                </div>
+                <div class="withMargin">
+                    <label for="action2Icon" class="form-label">action 2 icon URL</label>
+                    <input name="action2Icon" id="action2Icon" class="form-control" type="text" placeholder="test"/>
+                </div>
+                <div class="withMargin">
+                    <label for="action2Title" class="form-label">action 2 title</label>
+                    <input name="action2Title" id="action2Title" class="form-control" type="text" placeholder="test"/>
+                </div>
+            </fieldset>
+            <button class="btn btn-primary" type="submit">Send</button>
+        </form>
+    </section>
+    <section class="button-box">
+        <button class="btn btn-primary" type="button" id="clearWorkers">Unregister workers</button>
+        <button class="btn btn-primary" type="button" id="regenerateVapid">Regenerate vapid keys</button>
+        <button class="btn btn-primary" type="button" id="regenerateSubscription">Regenerate subscription</button>
+        <button class="btn btn-primary" type="button" id="fetchVapids">Fetch vapid keys</button>
+    </section>
+    <section>
+        <h5>Use already generated vapid keys</h5>
+        <form id="setVapid">
+            <div class="withMargin mb-3">
+                <label for="privateVapid" class="form-label">Private vapid key</label>
+                <input name="privateVapid" id="privateVapid" class="form-control" type="text" required/>
+            </div>
+            <div class="withMargin mb-3" >
+                <label for="publicVapid" class="form-label">Public vapid key</label>
+                <input name="publicVapid" id="publicVapid" class="form-control" type="text" required/>
+            </div>
+            <p style="color: red;" id="changeVapidErrorContainer"></p>
+            <button class="btn btn-primary" type="submit">Set vapids</button>
+        </form>
+    </section>
+    <div id="modal" class="modal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5>Response from server</h5>
+                </div>
+                <div class="modal-body" id="modal-body"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
     </div>
-    <form id="setVapid">
-        <div class="withMargin mb-3">
-            <label for="privateVapid" class="form-label">Private vapid key</label>
-            <input name="privateVapid" id="privateVapid" class="form-control" type="text" required/>
-        </div>
-        <div class="withMargin mb-3" >
-            <label for="publicVapid" class="form-label">Public vapid key</label>
-            <input name="publicVapid" id="publicVapid" class="form-control" type="text" required/>
-        </div>
-        <p style="color: red;" id="changeVapidErrorContainer"></p>
-        <button class="btn btn-primary" type="submit">Set vapids</button>
-    </form>
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-pprn3073KE6tl6bjs2QrFaJGz5/SUsLqktiwsUTF55Jfv3qYSDhgCecCxMW52nD2" crossorigin="anonymous"></script>
     <script src="index.js" type="module"></script>
 </body>
 </html>
