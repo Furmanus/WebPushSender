@@ -11,11 +11,15 @@ services:
     restart: unless-stopped
     depends_on:
       - redis
+    networks:
+      - default
+      - luklac
   redis:
     image: redis:7.0.7-alpine
     container_name: webpushsender-redis
     restart: unless-stopped
+    networks:
+      - default
 networks:
   luklac:
-    name: luklac-network
     external: true
