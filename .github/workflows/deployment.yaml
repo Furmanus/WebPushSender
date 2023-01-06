@@ -1,0 +1,22 @@
+name: Push Sender App deployment
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy with ssh
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USERNAME }}
+          key: ${{ secrets.DEPLOY_PRIVATE_KEY }}
+          port: 22
+          script: |
+            cd /apps/pushsender.edu.pl/
+            docker-compose down
+            git pull origin master
+            docker compose up -d --build
